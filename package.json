@@ -2,6 +2,8 @@
   "name": "ai-reader",
   "private": true,
   "version": "2.0.0",
+  "description": "本地 TXT 电子书阅读器（Web + Electron 桌面版）",
+  "author": "zjn0316",
   "type": "module",
   "main": "dist-electron/main.cjs",
   "scripts": {
