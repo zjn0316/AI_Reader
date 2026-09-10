@@ -1,0 +1,19 @@
+appId: com.zjn.ai-reader
+productName: AI Reader
+copyright: Copyright © 2026 zjn0316
+
+directories:
+  output: release
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+
+win:
+  target:
+    - portable
+  artifactName: AI_Reader-${version}-portable.exe
+
+portable:
+  artifactName: AI_Reader-${version}-portable.exe
