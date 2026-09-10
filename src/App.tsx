@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import './App.css'
 import { ReaderView } from './components/ReaderView'
 import { useFontSize } from './hooks/useFontSize'
+import { hasDesktopApi, openBookViaDesktop } from './lib/desktop'
 import {
   hasTxtExtension,
   readTxtFile,
@@ -16,6 +17,7 @@ function App() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [error, setError] = useState<LoadError>(null)
   const { fontSize, increase, decrease } = useFontSize()
+  const isDesktop = hasDesktopApi()
 
   const handleFile = useCallback(async (file: File | undefined) => {
     if (!file) return
@@ -45,6 +47,18 @@ function App() {
     [handleFile],
   )
 
+  const handleDesktopOpen = useCallback(async () => {
+    try {
+      const book = await openBookViaDesktop()
+      if (!book) return
+      setParagraphs(book.paragraphs)
+      setFileName(book.name)
+      setError(null)
+    } catch {
+      setError('read-failed')
+    }
+  }, [])
+
   return (
     <div className="app">
       <header className="app-header">
@@ -53,15 +67,21 @@ function App() {
       </header>
 
       <div className="toolbar">
-        <label className="open-label">
-          打开 TXT 文件
-          <input
-            type="file"
-            accept=".txt,text/plain"
-            aria-label="选择要打开的 TXT 文件"
-            onChange={handleFileChange}
-          />
-        </label>
+        {isDesktop ? (
+          <button type="button" className="open-label" onClick={handleDesktopOpen}>
+            打开 TXT 文件
+          </button>
+        ) : (
+          <label className="open-label">
+            打开 TXT 文件
+            <input
+              type="file"
+              accept=".txt,text/plain"
+              aria-label="选择要打开的 TXT 文件"
+              onChange={handleFileChange}
+            />
+          </label>
+        )}
 
         <div className="font-controls" role="group" aria-label="字号调节">
           <button type="button" onClick={decrease} disabled={fontSize <= MIN_FONT_SIZE}>

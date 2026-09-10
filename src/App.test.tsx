@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
+import type { DesktopApi } from './lib/desktop'
 import { FONT_SIZE_STORAGE_KEY } from './lib/fontSize'
 
 function makeFile(name: string, content: string): File {
@@ -85,5 +86,40 @@ describe('App', () => {
     expect(view).toHaveStyle({ fontSize: '20px' })
     const controls = screen.getByRole('group', { name: '字号调节' })
     expect(within(controls).getByText('20px')).toBeInTheDocument()
+  })
+})
+
+describe('App (desktop)', () => {
+  afterEach(() => {
+    delete window.desktop
+  })
+
+  it('uses the native bridge and renders the opened book', async () => {
+    const openTxtFile = vi
+      .fn()
+      .mockResolvedValue({ name: '桌面小说.txt', content: '第一章\n第二章' })
+    window.desktop = { openTxtFile } as unknown as DesktopApi
+
+    const user = userEvent.setup()
+    render(<App />)
+
+    expect(screen.queryByLabelText('选择要打开的 TXT 文件')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: '打开 TXT 文件' }))
+
+    expect(openTxtFile).toHaveBeenCalledTimes(1)
+    expect(screen.getByTestId('reader-view')).toBeInTheDocument()
+    expect(screen.getByText('第一章')).toBeInTheDocument()
+    expect(screen.getByText('第二章')).toBeInTheDocument()
+  })
+
+  it('shows an error when the native bridge fails', async () => {
+    const openTxtFile = vi.fn().mockRejectedValue(new Error('boom'))
+    window.desktop = { openTxtFile } as unknown as DesktopApi
+
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: '打开 TXT 文件' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent('文件读取失败')
   })
 })
